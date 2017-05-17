@@ -1,16 +1,16 @@
-const express = require('express');
-const path = require('path');
-// const favicon = require('serve-favicon');
-const debug = require('debug')('stork-server:app');
-const logger = require('morgan');
-const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+import express from 'express';
+import path from 'path';
+import Debug from 'debug';
+import logger from 'morgan';
+import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
+import mongoose from 'mongoose';
 
-const config = require('./config');
-const index = require('./routes/index');
-const users = require('./routes/users');
+import config from './config';
+import index from './routes/index';
+import users from './routes/users';
 
+const debug = Debug('stork-server:app');
 const app = express();
 
 // view engine setup
@@ -55,4 +55,4 @@ app.use((err, req, res, next) => {
   res.render('error');
 });
 
-module.exports = app;
+export default app;

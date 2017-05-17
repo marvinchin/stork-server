@@ -3,10 +3,14 @@
 /**
  * Module dependencies.
  */
+import Debug from 'debug';
+import http from 'http';
 
-const app = require('../app');
-const debug = require('debug')('stork-server:server');
-const http = require('http');
+import app from '../app';
+
+
+const debug = Debug('stork-server:server');
+
 
 /**
  * Get port from environment and store in Express.
