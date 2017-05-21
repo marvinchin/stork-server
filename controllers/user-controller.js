@@ -5,14 +5,14 @@ import { generateHash } from '../helpers/crypto';
 export class UserController {
   constructor(options) {
     if (options.username) {
-      this.user = this._findUserByUsername(options.username);
+      this.user = this.findUserByUsername(options.username);
     }
   }
 
   /*
     Called by user router's GET request.
 
-    @return {Object} obj - Either null for failed query, or a JSON object 
+    @return {Object} obj - Either null for failed query, or a JSON object
     containing information about the user.
   */
   async getUserInfo() {
@@ -35,13 +35,13 @@ export class UserController {
     };
   }
 
-   _findUserByUsername(username) {
-     return new Promise((resolve, reject) => {
-       User.findOne({ username }).populate('books').exec((err, user) => {
-         if (err) reject(err);
-         resolve(user);
-       });
-     });
+  static findUserByUsername(username) {
+    return new Promise((resolve, reject) => {
+      User.findOne({ username }).populate('books').exec((err, user) => {
+        if (err) reject(err);
+        resolve(user);
+      });
+    });
   }
 }
 

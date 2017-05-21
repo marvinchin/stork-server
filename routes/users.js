@@ -11,7 +11,7 @@ const router = Router();
 router.get('/:username', async (req, res, next) => {
   const user = new UserController({ username: req.params.username });
 
-  let result = await user.getUserInfo();
+  const result = await user.getUserInfo();
   if (!result) {
     return res.status(404).json({ success: false, error: 'Unable to find user.' });
   }
