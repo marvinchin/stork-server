@@ -5,6 +5,7 @@ import { generateHash } from '../helpers/crypto';
 export class UserController {
   constructor(options) {
     if (options.username) {
+      // This one is a promise.
       this.user = this.findUserByUsername(options.username);
     }
   }
