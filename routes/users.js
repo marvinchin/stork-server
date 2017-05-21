@@ -17,24 +17,25 @@ router.get('/:username', async (req, res, next) => {
   } catch (err) {
     console.log('Error occurred while finding user: ');
     console.log(err);
-    return res.status(404).json({ error: 'User not found.' });
+    return res.status(404).json({ success: false, error: 'User not found.' });
   }
 
   if (user == null) {
-    return res.status(404).json({ error: 'User not found.' });
+    return res.status(404).json({ success: false, error: 'User not found.' });
   }
 
   // TODO: Ensure this works.
   let books;
   try {
-    books = user.books.map(bookID => ({ title: bookID.title, author: bookID.author }));
+    books = user.books.populate('books').map(book => ({ title: book.title, author: book.author }));
   } catch (err) {
     console.log('Error occurred while mapping books: ');
     console.log(err);
-    return res.status(404).json({ error: 'Error: Please try again' });
+    return res.status(404).json({ success: false, error: 'Error: Please try again' });
   }
 
   return res.status(200).json({
+    success: true,
     username: user.username,
     email: user.email,
     gender: user.gender,
