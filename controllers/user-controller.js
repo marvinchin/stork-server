@@ -16,7 +16,7 @@ import { generateHash } from '../helpers/crypto';
 export const createUser = async (req, res) => {
   // Check that there is a body
   if (!req.body) {
-    return res.status(400).json({ error: 'Use JSON!' });
+    return res.status(400).json({ success: false, error: 'Use JSON!' });
   }
 
   // Check that the parameters are correct
@@ -33,7 +33,7 @@ export const createUser = async (req, res) => {
   const result = await req.getValidationResult();
 
   if (!result.isEmpty()) {
-    return res.status(400).json({ error: result.array()[0].msg });
+    return res.status(400).json({ success: false, error: result.array()[0].msg });
   }
 
   const conflictingUser = await User.findOne({
@@ -42,9 +42,9 @@ export const createUser = async (req, res) => {
 
   if (conflictingUser !== null) {
     if (conflictingUser.email === req.body.email) {
-      return res.status(400).json({ error: 'Email already taken.' });
+      return res.status(400).json({ success: false, error: 'Email already taken.' });
     } else if (conflictingUser.username === req.body.username) {
-      return res.status(400).json({ error: 'Username already taken.' });
+      return res.status(400).json({ success: false, error: 'Username already taken.' });
     }
   }
 
@@ -54,7 +54,7 @@ export const createUser = async (req, res) => {
   } catch (err) {
     console.log('An error has occured when generating hash for password: ');
     console.log(err);
-    return res.status(400).json({ error: 'Error: Please try again.' });
+    return res.status(400).json({ success: false, error: 'Error: Please try again.' });
   }
 
   const newUser = new User();
@@ -69,7 +69,7 @@ export const createUser = async (req, res) => {
     if (err) {
       console.log('An error has occured when saving new user: ');
       console.log(err);
-      return res.status(400).json({ error: 'Error: Please try again.' });
+      return res.status(400).json({ success: false, error: 'Error: Please try again.' });
     }
     return res.status(200).json({ success: true });
   });
