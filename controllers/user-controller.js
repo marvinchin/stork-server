@@ -1,5 +1,49 @@
 import User from '../models/user';
+import Book from '../models/book';
 import { generateHash } from '../helpers/crypto';
+
+export class UserController {
+  constructor(options) {
+    if (options.username) {
+      this.user = this._findUserByUsername(options.username);
+    }
+  }
+
+  /*
+    Called by user router's GET request.
+
+    @return {Object} obj - Either null for failed query, or a JSON object 
+    containing information about the user.
+  */
+  async getUserInfo() {
+    try {
+      this.user = await this.user;
+    } catch (err) {
+      console.log('Error occured while finding user.');
+      console.log(err);
+      return null;
+    }
+
+    if (!this.user) return null;
+
+    return {
+      username: this.user.username,
+      email: this.user.email,
+      gender: this.user.gender,
+      description: this.user.description,
+      books: this.user.books.map(book => ({ title: book.title, author: book.author })),
+    };
+  }
+
+   _findUserByUsername(username) {
+     return new Promise((resolve, reject) => {
+       User.findOne({ username }).populate('books').exec((err, user) => {
+         if (err) reject(err);
+         resolve(user);
+       });
+     });
+  }
+}
 
 /*
   @param {request} req - The request object that contains body and headers.
