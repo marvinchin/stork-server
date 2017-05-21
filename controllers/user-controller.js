@@ -28,6 +28,7 @@ export const createUser = async (req, res) => {
   req.checkBody('password', 'Password cannot contain spaces.').noSpaces();
   req.checkBody('password', 'Password must be between 6 and 24 characters long.').len(6, 20);
   req.checkBody('gender', 'Invalid gender.').validGender();
+  req.checkBody('description', 'Description must not contain more than 100 characters.').len(0, 100);
   req.checkBody('email', 'Email cannot be blank.').notEmpty();
 
   const result = await req.getValidationResult();
@@ -61,6 +62,7 @@ export const createUser = async (req, res) => {
   newUser.username = req.body.username;
   newUser.gender = req.body.gender;
   newUser.email = req.body.email;
+  newUser.description = req.body.description;
   newUser.authorizedTokens = [];
   newUser.books = [];
   newUser.hashedPassword = await hashedPassword;
