@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 
 import validator from './middleware/validator';
 import session from './middleware/session';
+import cors from './middleware/cors';
 import config from './config';
 import index from './routes/index';
 import users from './routes/users';
@@ -34,6 +35,7 @@ mongoose.connect(config.DB_CONNECTION_STRING, {}, (err) => {
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cors);
 app.use(validator());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
