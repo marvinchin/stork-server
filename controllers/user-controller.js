@@ -131,8 +131,7 @@ export const createUser = async (req, res) => {
   @param {request} req - The request object that contains body and headers. Request must contain:
     1) Username
     2) Password
-    3) Expiry (The amount of time before the login token becomes expired)
-      The expiry field should contain an object with { days: Integer, hours: Integer }.
+    3) Expiry (The amount of seconds before the login token becomes expired).
   @param {response} res - The response object used to send response codes and data to client.
 
   Checks to make sure header is 'content-type':'application/json'.
@@ -144,8 +143,7 @@ export const createUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
 
-  if (!req.body.username || !req.body.password ||
-  !req.body.expiry || !req.body.expiry.days || !req.body.expiry.hours) {
+  if (!req.body.username || !req.body.password || !req.body.expiry) {
     return res.status(400).json({ success: false, error: 'Missing parameters.' });
   }
 
@@ -165,12 +163,7 @@ export const loginUser = async (req, res) => {
   if (!hashesMatch) return res.status(400).json({ success: false, error: 'Invalid credentials.' });
 
   const expiryDate = new Date();
-  console.log("default date: ");
-  console.log(expiryDate);
-  expiryDate.setDate(expiryDate.getDate() + parseInt(req.body.expiry.days, 10));
-  expiryDate.setHours(expiryDate.getHours() + parseInt(req.body.expiry.hours, 10));
-  console.log('After setting: ');
-  console.log(expiryDate);
+  expiryDate.setSeconds(expiryDate.getSeconds() + parseInt(req.body.expiry, 10));
 
   const validTokens = matchingUser.authorizedTokens.filter(token =>
     token.expiry.value > Date.now() && token.id !== req.session.id);
