@@ -7,6 +7,8 @@ export class UserController {
     if (options.username) {
       // This one is a promise.
       this.user = UserController.findUserByUsername(options.username);
+    } else if (options.user) {
+      this.user = options.user;
     }
   }
 
@@ -32,6 +34,7 @@ export class UserController {
       email: this.user.email,
       gender: this.user.gender,
       description: this.user.description,
+      profilePicture: `/profile-pictures/${this.user.profilePicture ? this.user.username : '_default'}.jpg`,
       books: this.user.books.map(book => ({ title: book.title, author: book.author })),
     };
   }
@@ -143,8 +146,9 @@ export const createUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
 
-  if (!req.body.username || !req.body.password || !req.body.expiry) {
-    return res.status(400).json({ success: false, error: 'Missing parameters.' });
+  if (!req.body.username || !req.body.password ||
+    !Number.isInteger(req.body.expiry) || !req.body.expiry > 0) {
+    return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
   }
 
   const matchingUser = await User.findOne({ username: req.body.username });
@@ -175,6 +179,7 @@ export const loginUser = async (req, res) => {
 
   // Auth stores only the username for easy searching. Authentication is done through sessionID.
   req.session.auth = { username: req.body.username };
+  const user = new UserController(matchingUser);
 
-  return res.status(200).json({ success: true });
+  return res.status(200).json({ success: true, user: await user.getUserInfo() });
 };

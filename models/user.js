@@ -7,6 +7,8 @@ import mongoose, { Schema } from 'mongoose';
 
   email must be lowercase to prevent conflicts
 
+  profilePicture indicates whether the it has been set. If false, use default.
+
   authorizedTokens stores an array of tokens(Strings) authorized
   by the user, with a given expiry date.
 */
@@ -14,6 +16,7 @@ const UserSchema = Schema({
   username: { type: String, required: true, lowercase: true },
   gender: { type: String, required: true, enum: ['Male', 'Female'] },
   description: { type: String, max: 100 },
+  profilePictureIsSet: { type: Boolean, default: false },
   email: { type: String, required: true, lowercase: true },
   hashedPassword: { type: String, required: true },
   authorizedTokens: [{ id: String, expiry: Date }],
