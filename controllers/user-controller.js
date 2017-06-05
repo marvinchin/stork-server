@@ -7,9 +7,18 @@ export class UserController {
     if (options.username) {
       // This one is a promise.
       this.user = UserController.findUserByUsername(options.username);
-    } else if (options.user) {
-      this.user = options.user;
     }
+  }
+
+  async checkThatUserExists() {
+    try {
+      this.user = await this.user;
+    } catch (err) {
+      console.log('Error occured while finding user.');
+      console.log(err);
+      return false;
+    }
+    return this.user != null;
   }
 
   /*
@@ -19,15 +28,7 @@ export class UserController {
     containing information about the user.
   */
   async getUserInfo() {
-    try {
-      this.user = await this.user;
-    } catch (err) {
-      console.log('Error occured while finding user.');
-      console.log(err);
-      return null;
-    }
-
-    if (!this.user) return null;
+    if (!await this.checkThatUserExists()) return null;
 
     return {
       username: this.user.username,
@@ -45,6 +46,46 @@ export class UserController {
         if (err) reject(err);
         resolve(user);
       });
+    });
+  }
+
+  /*
+    @param {String} password - The password whose hash will be computed for the comparison.
+    @return {Boolean} - Whether the password hashes match.
+
+    Used primarily by the loginUser function, it does not await the completion of the finding
+    of user by ID because that has already been done in the calling function prior to calling
+    this method.
+  */
+  async hashesMatch(password) {
+    let matchResult = false;
+    try {
+      matchResult = await compareHash(password, this.user.hashedPassword);
+    } catch (err) {
+      console.log('An error has occured while comparing hashes:');
+      console.log(err);
+    }
+    return matchResult;
+  }
+
+  /*
+    @param {String/Integer} expirySeconds - The amount of time this token is effective for.
+    @param {String} sessionID - The sessionID that will be saved as the token.
+
+    Used primarily by the loginUser function to add a new token to the user. It first removes
+    expired and conflicting tokens, then adds a new one with the corresponding expiry date and
+    saves it into the database.
+  */
+  addAuthorizationToken(expirySeconds, sessionID) {
+    const expiryDate = new Date();
+    expiryDate.setSeconds(expiryDate.getSeconds() + parseInt(expirySeconds, 10));
+
+    const validTokens = this.user.authorizedTokens.filter(token =>
+      token.expiry.value > Date.now() && token.id !== sessionID);
+    validTokens.push({ id: sessionID, expiry: expiryDate });
+
+    this.user.update({ authorizedTokens: validTokens }, (err, res) => {
+      if (err) console.log(err);
     });
   }
 }
@@ -151,35 +192,19 @@ export const loginUser = async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
   }
 
-  const matchingUser = await User.findOne({ username: req.body.username });
+  const matchingUserController = new UserController({ username: req.body.username });
 
-  if (!matchingUser) return res.status(400).json({ success: false, error: 'Invalid credentials.' });
+  // Makes sure the user search is complete.
+  const userExists = await matchingUserController.checkThatUserExists();
+  if (!userExists) return res.status(400).json({ success: false, error: 'Invalid credentials.' });
 
-  let hashesMatch;
-  try {
-    hashesMatch = await compareHash(req.body.password, matchingUser.hashedPassword);
-  } catch (err) {
-    console.log('Error occured while comparing hashes:');
-    console.log(err);
-    return res.status(400).json({ success: false, error: 'Error: Please try again.' });
-  }
-
+  const hashesMatch = await matchingUserController.hashesMatch(req.body.password);
   if (!hashesMatch) return res.status(400).json({ success: false, error: 'Invalid credentials.' });
 
-  const expiryDate = new Date();
-  expiryDate.setSeconds(expiryDate.getSeconds() + parseInt(req.body.expiry, 10));
-
-  const validTokens = matchingUser.authorizedTokens.filter(token =>
-    token.expiry.value > Date.now() && token.id !== req.session.id);
-  validTokens.push({ id: req.session.id, expiry: expiryDate });
-
-  matchingUser.update({ authorizedTokens: validTokens }, (err, res) => {
-    if (err) console.log(err);
-  });
+  matchingUserController.addAuthorizationToken(req.body.expiry, req.session.id);
 
   // Auth stores only the username for easy searching. Authentication is done through sessionID.
   req.session.auth = { username: req.body.username };
-  const user = new UserController(matchingUser);
 
-  return res.status(200).json({ success: true, user: await user.getUserInfo() });
+  return res.status(200).json({ success: true, user: await matchingUserController.getUserInfo() });
 };
