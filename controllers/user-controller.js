@@ -88,6 +88,20 @@ export class UserController {
       if (err) console.log(err);
     });
   }
+
+  /*
+    @param {String} sessionID - The sessionID thats used as the authorization token for validation.
+    @return {Boolean} - Whether or not the authorization token is valid.
+
+    Used by authenticator middleware to check the validity of the user's token.
+  */
+  async validateAuthorizationToken(sessionID) {
+    if (!await this.checkThatUserExists()) return false;
+
+    const matchingTokens = this.user.authorizedTokens.filter(token =>
+      token.expiry.value > Date.now() && token.id === sessionID);
+    return matchingTokens.length > 0;
+  }
 }
 
 /*
