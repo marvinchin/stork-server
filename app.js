@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import validator from './middleware/validator';
 import session from './middleware/session';
 import cors from './middleware/cors';
+import authenticator from './middleware/authenticator';
 import config from './config';
 import index from './routes/index';
 import users from './routes/users';
@@ -40,6 +41,7 @@ app.use(validator());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session());
+app.use(authenticator);
 
 app.use('/', index);
 app.use('/users', users);

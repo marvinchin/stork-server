@@ -44,3 +44,6 @@ jspm_packages
 
 # Random
 .DS_Store
+
+# Default profile picture
+/public/profile-pictures/_default.*
