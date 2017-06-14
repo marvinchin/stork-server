@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<html>
+  <% if (message) { %>
+    <div><%= message %></div>
+  <% } %>
+  <div>
+    Genres:
+  </div>
+  <ol>
+    <% genres.forEach(function(genre) { %>
+      <p><%= genre %></p>
+    <% }); %>
+  </ol>
+  <form action="/admin/addGenre" method="post">
+    <div>
+      <label>Add new genre:</label>
+      <input type="text" name="genre">
+      <input type="submit" >
+    </div>
+  </form>
+</html>

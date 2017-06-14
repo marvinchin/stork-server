@@ -81,7 +81,7 @@ export class UserController {
     expiryDate.setSeconds(expiryDate.getSeconds() + parseInt(expirySeconds, 10));
 
     const validTokens = this.user.authorizedTokens.filter(token =>
-      token.expiry.value > Date.now() && token.id !== sessionID);
+      token.expiry.getTime() > Date.now() && token.id !== sessionID);
     validTokens.push({ id: sessionID, expiry: expiryDate });
 
     this.user.update({ authorizedTokens: validTokens }, (err, res) => {
@@ -99,7 +99,7 @@ export class UserController {
     if (!await this.checkThatUserExists()) return false;
 
     const matchingTokens = this.user.authorizedTokens.filter(token =>
-      token.expiry.value > Date.now() && token.id === sessionID);
+      token.expiry.getTime() > Date.now() && token.id === sessionID);
     return matchingTokens.length > 0;
   }
 }
@@ -202,7 +202,8 @@ export const loginUser = async (req, res) => {
   if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
 
   if (!req.body.username || !req.body.password ||
-    !Number.isInteger(req.body.expiry) || !req.body.expiry > 0) {
+    (!Number.isInteger(req.body.expiry) && !Number.isInteger(parseInt(req.body.expiry, 10))) ||
+    !req.body.expiry > 0) {
     return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
   }
 
