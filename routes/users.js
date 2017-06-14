@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/user-controller';
+import { createBook } from '../controllers/book-controller';
 
 const router = Router();
 
@@ -18,6 +19,18 @@ router.get('/:username', async (req, res, next) => {
 
   result.success = true;
   return res.status(200).json(result);
+});
+
+/*
+  Creates a book under the user. 
+
+  Requires authentication.
+*/
+router.post('/createBook', async (req, res, next) => {
+  if (!req.authenticated) {
+    return res.status(403).json({ success: false, error: 'Authentication required.' });
+  }
+  return createBook(req, res);
 });
 
 export default router;

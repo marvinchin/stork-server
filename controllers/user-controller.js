@@ -102,6 +102,25 @@ export class UserController {
       token.expiry.getTime() > Date.now() && token.id === sessionID);
     return matchingTokens.length > 0;
   }
+
+  /*
+    @param {String} bookID - The bookID thats to be added.
+    @return Promise{} - A promise to save the new book in the user.
+
+    Used by createBook in bookcontroller create an association between the new book
+    and the calling user.
+  */
+  async addBook(bookID) {
+    if (!await this.checkThatUserExists()) return false;
+    const newArrayOfBooks = this.user.books;
+    newArrayOfBooks.push(bookID);
+    return new Promise((resolve, reject) => {
+      this.user.update({ books: newArrayOfBooks }, (err, res) => {
+        if (err) return reject(err);
+        return resolve();
+      });
+    });
+  }
 }
 
 /*
