@@ -10,17 +10,20 @@ import validator from './middleware/validator';
 import session from './middleware/session';
 import cors from './middleware/cors';
 import authenticator from './middleware/authenticator';
+import assertAdmin from './middleware/assert-admin';
 import config from './config';
 import index from './routes/index';
 import users from './routes/users';
+import genres from './routes/genres';
 import authentication from './routes/authentication';
+import admin from './routes/admin';
 
 const debug = Debug('stork-server:app');
 const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'ejs');
 
 // connect to db
 mongoose.connect(config.DB_CONNECTION_STRING, {}, (err) => {
@@ -42,9 +45,12 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session());
 app.use(authenticator);
+app.use('/admin', assertAdmin);
 
 app.use('/', index);
+app.use('/admin', admin);
 app.use('/users', users);
+app.use('/genres', genres);
 app.use('/authentication', authentication);
 
 // catch 404 and forward to error handler
