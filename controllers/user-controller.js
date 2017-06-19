@@ -7,6 +7,8 @@ export class UserController {
     if (options.username) {
       // This one is a promise.
       this.user = UserController.findUserByUsername(options.username);
+    } else if (options.id) {
+      this.user = UserController.findUserByID(options.id);
     }
   }
 
@@ -36,15 +38,27 @@ export class UserController {
       gender: this.user.gender,
       description: this.user.description,
       profilePicture: `/profile-pictures/${this.user.profilePicture ? this.user.username : '_default'}.jpg`,
-      books: this.user.books.map(book => ({ title: book.title, author: book.author })),
+      books: this.user.books.map(book => ({ title: book.title,
+        author: book.author,
+        dateListed: book.dateListed.getTime(),
+        additionalDescription: book.additionalDescription })),
     };
   }
 
   static findUserByUsername(username) {
     return new Promise((resolve, reject) => {
       User.findOne({ username }).populate('books').exec((err, user) => {
-        if (err) reject(err);
-        resolve(user);
+        if (err) return reject(err);
+        return resolve(user);
+      });
+    });
+  }
+
+  static findUserByID(id) {
+    return new Promise((resolve, reject) => {
+      User.findById(id, (err, user) => {
+        if (err) return reject(err);
+        return resolve(user);
       });
     });
   }

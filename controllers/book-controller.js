@@ -5,7 +5,39 @@ import { filterAsync, mapAsync } from '../helpers/async-helper';
 
 
 export class BookController {
+  constructor(options) {
+    if (options.book) {
+      this.book = options.book;
+    }
+  }
 
+  /*
+    @param {Object} options - Object specifying what info to be returned.
+      ownerUsername: Display username.
+    @return {Object} - Object containing required info. Compulsory info:
+      title
+      author
+      genre
+      additionalDescription
+      dateListed
+      id
+  */
+  async getBookInfo(options) {
+    const toBeReturned = {
+      title: this.book.title,
+      author: this.book.author,
+      genre: this.book.genre.map(genre => genre.title),
+      additionalDescription: this.book.additionalDescription,
+      dateListed: this.book.dateListed.getTime(),
+      id: this.book.id,
+    };
+
+    if (options.ownerUsername) {
+      toBeReturned.ownerUsername = this.book.owner.username;
+    }
+
+    return toBeReturned;
+  }
 }
 
 /*
@@ -29,11 +61,13 @@ export class BookController {
 export const createBook = async (req, res) => {
   if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
 
+  // Preliminary checks for existence of required parameters.
   if (!req.body.title || !req.body.author || !req.body.genre ||
   req.body.genre.constructor !== Array || req.body.genre.length < 1) {
     return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
   }
 
+  // Making sure critical parameters are not blank.
   req.checkBody('title', 'Title cannot be blank.').notEmpty();
   req.checkBody('author', 'Author cannot be blank.').notEmpty();
 
@@ -42,7 +76,7 @@ export const createBook = async (req, res) => {
     return res.status(400).json({ success: false, error: validationResult.array()[0].msg });
   }
 
-  // Check that genres are valid.
+  // Check that genres are valid. Makes use of length comparison between unfiltered vs filtered.
   const filteredGenres = await filterAsync(req.body.genre, (title, callback) => {
     const genreController = new GenreController({ title });
     genreController.checkThatGenreExists().then(genreExists => callback(null, genreExists));
@@ -58,6 +92,7 @@ export const createBook = async (req, res) => {
     genreController.checkThatGenreExists().then(() => callback(null, genreController.genre.id));
   });
 
+  // User is authenticated so this is not required, but just to be sure...
   const callingUser = new UserController({ username: req.session.auth.username });
   const userExists = await callingUser.checkThatUserExists();
   if (!userExists) return res.status(400).json({ success: false, error: 'User doesnt exist.' });
@@ -81,3 +116,34 @@ export const createBook = async (req, res) => {
     }
   });
 };
+
+/*
+  @param {Integer} from - The nth entry to start at. (inclusive)
+  @param {Integer} to - The nth entry to end at. (inclusive)
+  @return Promise{Array{Book}} - The array of most recent nth to nth books.
+
+  Used by books router to get the n most recent books. Note that this implementation will
+  return the list that is loaded from mongoose if the from-to range is smaller than list length.
+  No validation is done so all callers must do their own validation
+*/
+export const getRecentBooks = (from, to) =>
+  new Promise((resolve, reject) => {
+    Book.find({}).sort({ dateListed: -1 }).limit(to + 1).populate('genre', 'title')
+    .populate('owner', 'username')
+    .exec(async (err, books) => {
+      if (err) return reject(err);
+      let slicedBooks = books;
+      if (from >= books.length) {
+        return resolve([]);
+      }
+      slicedBooks = books.slice(from, to + 1);
+
+      const mappedBooks = await mapAsync(slicedBooks, (book, callback) => {
+        const bookController = new BookController({ book });
+        bookController.getBookInfo({ ownerUsername: true }).then(info =>
+          callback(null, info));
+      });
+
+      return resolve(mappedBooks);
+    });
+  });
