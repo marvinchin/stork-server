@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html>
+  <form action="/admin/tests/createBook" method="post">
+    <div>
+      <label>Title: </label>
+      <input id="title" type="text" name="title">
+    </div>
+    <div>
+      <label>Author: </label>
+      <input id="author" type="text" name="author">
+    </div>
+    <div>
+      <label>Genres: </label>
+      <label><input id="fiction" type="checkbox" name="genre[]" value="Fiction">Fiction</label>
+      <label><input id="non-fiction" type="checkbox" name="genre[]" value="Non-Fiction">Non-Fiction</label>
+      <label><input id="aaaaa" type="checkbox" name="genre[]" value="aaaaa">aaaaa</label>
+    </div>
+    <div>
+      <label>Additional Description: </label>
+      <label><input id="addDes" type="checkbox" name="additionalDescription" value="Test">Test</label>
+    </div>
+    <div>
+      <button type="button" onclick="sendData()">Submit</button>
+    </div>
+    <script>
+      function sendData() {
+        var title = document.getElementById('title').value;
+        var author = document.getElementById('author').value;
+        var addDes = document.getElementById('addDes');
+        // Sending and receiving data in JSON format using POST mothod
+        var xhr = new XMLHttpRequest();
+        var url = "/admin/tests/createBook";
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader("Content-type", "application/json");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                alert(xhr.responseText);
+                var json = JSON.parse(xhr.responseText);
+                console.log(json);
+            }
+        };
+        var genres = [];
+        if (document.getElementById('fiction').checked) { genres.push('Fiction'); }
+        if (document.getElementById('non-fiction').checked) { genres.push('Non-Fiction'); }
+        if (document.getElementById('aaaaa').checked) { genres.push('aaaaa'); }
+
+        var data = JSON.stringify({"title": title, "author": author, 
+        "additionalDescription": addDes.checked?addDes.value:null, "genre": genres });
+        xhr.send(data);
+      }
+    </script>
+  </form>
+
+
+</html>
+
