@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { loginUser } from '../controllers/user-controller';
+import { createBook } from '../controllers/book-controller';
 import { getAllGenreTitles, addGenre } from '../controllers/genre-controller';
 
 const router = Router();
 
 
 router.get('/', (req, res, next) => res.render('admin/home'));
+router.get('/tests', (req, res, next) => res.render('admin/tests'));
+router.get('/tests/createBook', (req, res, next) => res.render('admin/createBook'));
 
 router.get('/genres', async (req, res, next) => {
   let genreTitles;
@@ -26,6 +29,10 @@ router.post('/login', (req, res, next) => {
 
 router.post('/addGenre', (req, res, next) => {
   addGenre(req, res);
+});
+
+router.post('/tests/createBook', (req, res, next) => {
+  createBook(req, res);
 });
 
 export default router;

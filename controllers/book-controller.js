@@ -1,6 +1,7 @@
 import Book from '../models/book';
 import { UserController } from './user-controller';
 import { GenreController } from './genre-controller';
+import { filterAsync, mapAsync } from '../helpers/async-helper';
 
 
 export class BookController {
@@ -29,7 +30,7 @@ export const createBook = async (req, res) => {
   if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
 
   if (!req.body.title || !req.body.author || !req.body.genre ||
-  req.body.genre.constructor !== Array) {
+  req.body.genre.constructor !== Array || req.body.genre.length < 1) {
     return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
   }
 
@@ -42,23 +43,22 @@ export const createBook = async (req, res) => {
   }
 
   // Check that genres are valid.
-  const filteredGenres = req.body.genre.filter(async (title) => {
+  const filteredGenres = await filterAsync(req.body.genre, (title, callback) => {
     const genreController = new GenreController({ title });
-    const genreExists = await genreController.checkThatGenreExists();
-    return genreExists;
+    genreController.checkThatGenreExists().then(genreExists => callback(null, genreExists));
   });
+
   if (filteredGenres.length !== req.body.genre.length) {
-    res.status(400).json({ success: false, error: 'Invalid genres.' });
+    return res.status(400).json({ success: false, error: 'Invalid genres.' });
   }
 
   // Now create a mapped version of the array of genres containing the object ID.
-  const mappedGenres = req.body.genre.map(async (title) => {
+  const mappedGenres = await mapAsync(req.body.genre, (title, callback) => {
     const genreController = new GenreController({ title });
-    await genreController.checkThatGenreExists();
-    return genreController.genre.id;
+    genreController.checkThatGenreExists().then(() => callback(null, genreController.genre.id));
   });
 
-  const callingUser = new UserController(req.session.auth.username);
+  const callingUser = new UserController({ username: req.session.auth.username });
   const userExists = await callingUser.checkThatUserExists();
   if (!userExists) return res.status(400).json({ success: false, error: 'User doesnt exist.' });
 
