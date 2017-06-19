@@ -26,7 +26,7 @@ router.get('/:username', async (req, res, next) => {
 
   Requires authentication.
 */
-router.post('/createBook', async (req, res, next) => {
+router.post('/createBook', (req, res, next) => {
   if (!req.authenticated) {
     return res.status(403).json({ success: false, error: 'Authentication required.' });
   }

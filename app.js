@@ -14,6 +14,7 @@ import assertAdmin from './middleware/assert-admin';
 import config from './config';
 import index from './routes/index';
 import users from './routes/users';
+import books from './routes/books';
 import genres from './routes/genres';
 import authentication from './routes/authentication';
 import admin from './routes/admin';
@@ -50,6 +51,7 @@ app.use('/admin', assertAdmin);
 app.use('/', index);
 app.use('/admin', admin);
 app.use('/users', users);
+app.use('/books', books);
 app.use('/genres', genres);
 app.use('/authentication', authentication);
 
