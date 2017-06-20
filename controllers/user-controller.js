@@ -1,6 +1,7 @@
 import User from '../models/user';
-import Book from '../models/book';
+import { BookController } from '../controllers/book-controller';
 import { generateHash, compareHash } from '../helpers/crypto';
+import { mapAsync } from '../helpers/async-helper';
 
 export class UserController {
   constructor(options) {
@@ -32,16 +33,20 @@ export class UserController {
   async getUserInfo() {
     if (!await this.checkThatUserExists()) return null;
 
+    const mappedBooks = mapAsync(this.user.books, (book, callback) => {
+      const bookController = new BookController({ book });
+      bookController.populateGenre()
+      .then(() => bookController.getBookInfo({}))
+      .then(info => callback(null, info));
+    });
+
     return {
       username: this.user.username,
       email: this.user.email,
       gender: this.user.gender,
       description: this.user.description,
       profilePicture: `/profile-pictures/${this.user.profilePicture ? this.user.username : '_default'}.jpg`,
-      books: this.user.books.map(book => ({ title: book.title,
-        author: book.author,
-        dateListed: book.dateListed.getTime(),
-        additionalDescription: book.additionalDescription })),
+      books: await mappedBooks,
     };
   }
 
@@ -56,7 +61,7 @@ export class UserController {
 
   static findUserByID(id) {
     return new Promise((resolve, reject) => {
-      User.findById(id, (err, user) => {
+      User.findById(id).populate('books').exec((err, user) => {
         if (err) return reject(err);
         return resolve(user);
       });
