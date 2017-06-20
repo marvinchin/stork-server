@@ -1,4 +1,5 @@
 import Book from '../models/book';
+import Genre from '../models/genre';
 import { UserController } from './user-controller';
 import { GenreController } from './genre-controller';
 import { filterAsync, mapAsync } from '../helpers/async-helper';
@@ -37,6 +38,21 @@ export class BookController {
     }
 
     return toBeReturned;
+  }
+
+  populateGenre() {
+    console.log(this.book.genre);
+    return new Promise(async (resolve, reject) => {
+      const mappedGenres = await mapAsync(this.book.genre, (id, callback) => {
+        Genre.findById(id, (err, genreObject) => {
+          if (err) return reject(err);
+          return callback(null, genreObject);
+        });
+      });
+      console.log(mappedGenres);
+      this.book.genre = mappedGenres;
+      resolve();
+    });
   }
 }
 
