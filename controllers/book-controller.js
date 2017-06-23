@@ -19,7 +19,7 @@ export class BookController {
       title
       author
       genre
-      additionalDescription
+      description
       dateListed
       id
   */
@@ -28,7 +28,7 @@ export class BookController {
       title: this.book.title,
       author: this.book.author,
       genre: this.book.genre.map(genre => genre.title),
-      additionalDescription: this.book.additionalDescription,
+      description: this.book.description,
       dateListed: this.book.dateListed.getTime(),
       id: this.book.id,
     };
@@ -119,7 +119,7 @@ export const createBook = async (req, res) => {
   newBook.dateListed = new Date();
   newBook.owner = callingUser.user.id;
   newBook.genre = mappedGenres;
-  newBook.additionalDescription = req.body.additionalDescription || '';
+  newBook.description = req.body.description || '';
   return newBook.save(async (err, book) => {
     if (err) return res.status(400).json({ success: false, error: 'Error saving book.' });
     try {
