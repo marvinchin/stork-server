@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getRecentBooks } from '../controllers/book-controller';
+import { createBook } from '../controllers/book-controller';
 
 const router = Router();
 
@@ -23,6 +24,19 @@ router.get('/list/:n', async (req, res, next) => {
     return res.status(400).json({ success: false, error: 'An error has occured.' });
   }
   return res.status(200).json({ success: true, books });
+});
+
+
+/*
+  Creates a book under the user. 
+
+  Requires authentication.
+*/
+router.post('/create', (req, res, next) => {
+  if (!req.authenticated) {
+    return res.status(403).json({ success: false, error: 'Authentication required.' });
+  }
+  return createBook(req, res);
 });
 
 export default router;

@@ -46,7 +46,7 @@
         if (document.getElementById('aaaaa').checked) { genres.push('aaaaa'); }
 
         var data = JSON.stringify({"title": title, "author": author, 
-        "additionalDescription": addDes.checked?addDes.value:null, "genre": genres });
+        "description": addDes.checked?addDes.value:null, "genre": genres });
         xhr.send(data);
       }
     </script>

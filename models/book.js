@@ -6,7 +6,7 @@ const BookSchema = Schema({
   author: { type: String, required: true },
   genre: [{ type: Schema.ObjectId, ref: 'Genre' }],
   dateListed: { type: Date, required: true },
-  additionalDescription: { type: String, default: '' },
+  description: { type: String, default: '' },
 });
 
 export default mongoose.model('Book', BookSchema);
