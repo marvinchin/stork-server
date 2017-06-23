@@ -41,7 +41,6 @@ export class BookController {
   }
 
   populateGenre() {
-    console.log(this.book.genre);
     return new Promise(async (resolve, reject) => {
       const mappedGenres = await mapAsync(this.book.genre, (id, callback) => {
         Genre.findById(id, (err, genreObject) => {
@@ -49,7 +48,6 @@ export class BookController {
           return callback(null, genreObject);
         });
       });
-      console.log(mappedGenres);
       this.book.genre = mappedGenres;
       resolve();
     });
