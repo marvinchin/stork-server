@@ -28,7 +28,7 @@ router.get('/list/:n', async (req, res, next) => {
 
 
 /*
-  Creates a book under the user. 
+  Creates a book under the user.
 
   Requires authentication.
 */

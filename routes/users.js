@@ -16,8 +16,7 @@ router.get('/:username', async (req, res, next) => {
     return res.status(404).json({ success: false, error: 'Unable to find user.' });
   }
 
-  result.success = true;
-  return res.status(200).json(result);
+  return res.status(200).json({ success: true, user: result });
 });
 
 export default router;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createUser, loginUser } from '../controllers/user-controller';
+import { UserController, createUser, loginUser } from '../controllers/user-controller';
 
 const router = Router();
 
@@ -15,11 +15,19 @@ router.post('/login', (req, res, next) => {
   Helps client check the status of authentication before performing
   authentication-required stuff.
 */
-router.get('/status', (req, res, next) => {
+router.get('/status', async (req, res, next) => {
   if (!req.authenticated) {
     return res.status(200).json({ success: true, authenticated: false });
   }
-  return res.status(200).json({ success: true, authenticated: true });
+
+  const user = new UserController({ username: req.session.auth.username });
+
+  const result = await user.getUserInfo();
+  if (!result) {
+    return res.status(404).json({ success: true, authenticated: false });
+  }
+
+  return res.status(200).json({ success: true, authenticated: true, user: result });
 });
 
 export default router;
