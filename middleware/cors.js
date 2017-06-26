@@ -1,7 +1,7 @@
 const cors = (req, res, next) => {
   const allowedOrigins = ['http://localhost:8080', 'http://storkapp.flu.cc'];
   const origin = req.headers.origin;
-  if(allowedOrigins.indexOf(origin) > -1){
+  if (allowedOrigins.indexOf(origin) > -1) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
