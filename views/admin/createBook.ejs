@@ -40,13 +40,13 @@
                 console.log(json);
             }
         };
-        var genres = [];
-        if (document.getElementById('fiction').checked) { genres.push('Fiction'); }
-        if (document.getElementById('non-fiction').checked) { genres.push('Non-Fiction'); }
-        if (document.getElementById('aaaaa').checked) { genres.push('aaaaa'); }
+        var genres = '';
+        if (document.getElementById('fiction').checked) { genres = 'Fiction'; }
+        if (document.getElementById('non-fiction').checked) { genres = 'Non-Fiction'; }
+        if (document.getElementById('aaaaa').checked) { genres = 'aaaaa'; }
 
         var data = JSON.stringify({"title": title, "author": author, 
-        "description": addDes.checked?addDes.value:null, "genre": genres });
+        "description": addDes.checked?addDes.value:'', "genre": genres });
         xhr.send(data);
       }
     </script>

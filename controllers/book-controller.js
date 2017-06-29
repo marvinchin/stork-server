@@ -49,7 +49,7 @@ export class BookController {
     const toBeReturned = {
       title: this.book.title,
       author: this.book.author,
-      genre: this.book.genre.map(genre => genre.title),
+      genre: this.book.genre.title,
       description: this.book.description,
       dateListed: this.book.dateListed.getTime(),
       id: this.book.id,
@@ -64,14 +64,11 @@ export class BookController {
 
   populateGenre() {
     return new Promise(async (resolve, reject) => {
-      const mappedGenres = await mapAsync(this.book.genre, (id, callback) => {
-        Genre.findById(id, (err, genreObject) => {
-          if (err) return reject(err);
-          return callback(null, genreObject);
-        });
+      Genre.findById(this.book.genre, (err, genreObject) => {
+        if (err) return reject(err);
+        this.book.genre = genreObject;
+        return resolve();
       });
-      this.book.genre = mappedGenres;
-      resolve();
     });
   }
 }
@@ -80,7 +77,7 @@ export class BookController {
   @param {request} req - The request object that contains body and headers. Request must contain:
     1) Title
     2) Author
-    3) Genre (An array of strings)
+    3) Genre
     4) Additional description (optional)
   @param {response} res - The response object used to send response codes and data to client.
 
@@ -98,8 +95,7 @@ export const createBook = async (req, res) => {
   if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
 
   // Preliminary checks for existence of required parameters.
-  if (!req.body.title || !req.body.author || !req.body.genre ||
-  req.body.genre.constructor !== Array || req.body.genre.length < 1) {
+  if (!req.body.title || !req.body.author || !req.body.genre || req.body.genre.length < 1) {
     return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
   }
 
@@ -112,21 +108,10 @@ export const createBook = async (req, res) => {
     return res.status(400).json({ success: false, error: validationResult.array()[0].msg });
   }
 
-  // Check that genres are valid. Makes use of length comparison between unfiltered vs filtered.
-  const filteredGenres = await filterAsync(req.body.genre, (title, callback) => {
-    const genreController = new GenreController({ title });
-    genreController.checkThatGenreExists().then(genreExists => callback(null, genreExists));
-  });
-
-  if (filteredGenres.length !== req.body.genre.length) {
-    return res.status(400).json({ success: false, error: 'Invalid genres.' });
-  }
-
-  // Now create a mapped version of the array of genres containing the object ID.
-  const mappedGenres = await mapAsync(req.body.genre, (title, callback) => {
-    const genreController = new GenreController({ title });
-    genreController.checkThatGenreExists().then(() => callback(null, genreController.genre.id));
-  });
+  // Check that genre is valid.
+  const genreController = new GenreController({ title: req.body.genre });
+  const genreExists = await genreController.checkThatGenreExists();
+  if (!genreExists) return res.status(400).json({ success: false, error: 'Invalid genre.' });
 
   // User is authenticated so this is not required, but just to be sure...
   const callingUser = new UserController({ username: req.session.auth.username });
@@ -138,7 +123,7 @@ export const createBook = async (req, res) => {
   newBook.author = req.body.author;
   newBook.dateListed = new Date();
   newBook.owner = callingUser.user.id;
-  newBook.genre = mappedGenres;
+  newBook.genre = genreController.genre.id;
   newBook.description = req.body.description || '';
   return newBook.save(async (err, book) => {
     if (err) return res.status(400).json({ success: false, error: 'Error saving book.' });
