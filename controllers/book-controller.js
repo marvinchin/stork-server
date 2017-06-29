@@ -9,7 +9,29 @@ export class BookController {
   constructor(options) {
     if (options.book) {
       this.book = options.book;
+    } else if (options.id) {
+      this.book = BookController.findBookByID(options.id);
     }
+  }
+
+  async checkThatBookExists() {
+    try {
+      this.book = await this.book;
+    } catch (err) {
+      console.log('Error occured while finding book.');
+      console.log(err);
+      return false;
+    }
+    return this.book != null;
+  }
+
+  static findBookByID(id) {
+    return new Promise((resolve, reject) => {
+      Book.findById(id).populate('genre').populate('owner').exec((err, user) => {
+        if (err) return reject(err);
+        return resolve(user);
+      });
+    });
   }
 
   /*
