@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+
+<html>
+  <div>
+    <p>Selected book:</p>
+    <% all.forEach(function(book) { %>
+      <label><input type="checkbox" class="book" value=<%= book.id%>>
+        <%= book.title %> by <%= book.username %>
+      </label>
+    <% }); %>
+  </div>
+  <div>
+    <p>Select books to offer:</p>
+    <% all.forEach(function(book) { %>
+      <label><input type="checkbox" class="offer" value=<%= book.id%>><%= book.title %> by <%= book.username %></label>
+    <% }); %>
+  </div>
+  <br>
+  <div>
+    <label>Description:</label>
+    <input type="text" id="description" />
+  </div>
+  <br>
+  <div>
+    <button onclick="sendData()">Submit</button>
+  </div>
+  <script>
+    function sendData() {
+      var xhr = new XMLHttpRequest();
+      var url = "/admin/tests/createTrade";
+      xhr.open("POST", url, true);
+      xhr.setRequestHeader("Content-type", "application/json");
+      xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+              alert(xhr.responseText);
+              var json = JSON.parse(xhr.responseText);
+              console.log(json);
+          }
+      };
+      var selectedBook = document.getElementsByClassName("book");
+      var filteredSelected = Array.from(selectedBook).filter(function(book) {
+        return book.checked;
+      });
+      if (filteredSelected.length < 1) return alert('Select a book!');
+      var theSelectedBook = filteredSelected[0].value;
+
+      var offerSelected = document.getElementsByClassName("offer");
+      var filteredOffer = Array.from(offerSelected).filter(function(offer) {
+        return offer.checked;
+      });
+      if (filteredOffer.length < 1) return alert('Select books to offer!');
+      var mappedOffer = filteredOffer.map(function(offer) {
+        return offer.value;
+      });
+
+      var description = document.getElementById("description").value || "";
+
+      var data = JSON.stringify({"book": theSelectedBook, "offer": mappedOffer, 
+      "description": description });
+      xhr.send(data);
+    }
+  </script>
+
+
+</html>

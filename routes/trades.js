@@ -12,7 +12,7 @@ router.post('/create', (req, res, next) => {
   if (!req.authenticated) {
     return res.status(403).json({ success: false, error: 'Authentication required.' });
   }
-  createTrade(req, res);
+  return createTrade(req, res);
 });
 
 export default router;

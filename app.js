@@ -18,6 +18,7 @@ import books from './routes/books';
 import genres from './routes/genres';
 import authentication from './routes/authentication';
 import admin from './routes/admin';
+import trades from './routes/trades';
 
 const debug = Debug('stork-server:app');
 const app = express();
@@ -53,6 +54,7 @@ app.use('/admin', admin);
 app.use('/users', users);
 app.use('/books', books);
 app.use('/genres', genres);
+app.use('/trades', trades);
 app.use('/authentication', authentication);
 
 // catch 404 and forward to error handler
