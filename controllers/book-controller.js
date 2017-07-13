@@ -46,6 +46,8 @@ export class BookController {
       id
   */
   async getBookInfo(options) {
+    if (!(await this.checkThatBookExists())) return null;
+
     const toBeReturned = {
       title: this.book.title,
       author: this.book.author,
