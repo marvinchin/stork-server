@@ -4,6 +4,7 @@ import { UserController } from './user-controller';
 import { filterAsync, mapAsync } from '../helpers/async-helper';
 
 export class TradeController {
+  // Population is done by the controller, no need to populate yourself beforehand.
   constructor(options) {
     if (options.trade) {
       this.trade = options.trade;
@@ -28,22 +29,21 @@ export class TradeController {
 
     const toBeReturned = {
       id: this.trade.id,
-      listUser: this.trade.listUser,
-      offerUser: this.trade.offerUser,
-      listBook: this.trade.listBook,
-      offerBooks: this.trade.offerBooks,
+      listUser: this.listUserObject || this.trade.listUser,
+      offerUser: this.offerUserObject || this.trade.offerUser,
+      listBook: this.listBookObject || this.trade.listBook,
+      offerBooks: this.offerBooksObject || this.trade.offerBooks,
       description: this.trade.description,
       tradeStatus: this.trade.tradeStatus,
     };
     if (this.trade.selectedBook) {
-      toBeReturned.selectedBook = this.trade.selectedBook;
+      toBeReturned.selectedBook = this.selectedBookObject || this.trade.selectedBook;
     }
-
     return toBeReturned;
   }
 
   populateEverything() {
-    return Promise.all(this.populateUsers(), this.populateBooks());
+    return Promise.all([this.populateUsers(), this.populateBooks()]);
   }
 
   populateUsers() {
@@ -54,16 +54,16 @@ export class TradeController {
       }
       const promises = [];
       if (trade.populated('listUser') === undefined) {
-        const listUserController = new UserController({ id: trade.listUser });
+        const listUserController = new UserController({ username: trade.listUser });
         promises.push(new Promise(async (listUserResolve, listUserReject) => {
-          trade.listUser = await listUserController.getUserInfo();
+          this.listUserObject = await listUserController.getUserInfo();
           return listUserResolve();
         }));
       }
       if (trade.populated('offerUser') === undefined) {
-        const offerUserController = new UserController({ id: trade.offerUser });
+        const offerUserController = new UserController({ username: trade.offerUser });
         promises.push(new Promise(async (offerUserResolve, offerUserReject) => {
-          trade.offerUser = await offerUserController.getUserInfo();
+          this.offerUserObject = await offerUserController.getUserInfo();
           return offerUserResolve();
         }));
       }
@@ -83,13 +83,13 @@ export class TradeController {
       if (trade.populated('listBook') === undefined) {
         const listBookController = new BookController({ id: trade.listBook });
         promises.push(new Promise(async (listBookResolve, listBookReject) => {
-          trade.listBook = await listBookController.getBookInfo({ ownerUsername: true });
+          this.listBookObject = await listBookController.getBookInfo({ ownerUsername: true });
           return listBookResolve();
         }));
       }
       if (trade.populated('offerBooks') === undefined) {
         promises.push(new Promise(async (offerBookResolve, offerBookReject) => {
-          trade.offerBooks = await mapAsync(trade.offerBooks, (bookID, callback) => {
+          this.offerBooksObject = await mapAsync(trade.offerBooks, (bookID, callback) => {
             const offerBookController = new BookController({ id: bookID });
             offerBookController.getBookInfo({ ownerUsername: true }).then((info) => {
               callback(null, info);
@@ -101,7 +101,8 @@ export class TradeController {
       if (trade.selectedBook != null && trade.populated('selectedBook') === undefined) {
         const selectedBookController = new BookController({ id: trade.selectedBook });
         promises.push(new Promise(async (selectedBookResolve, selectedBookReject) => {
-          trade.selectedBook = await selectedBookController.getBookInfo({ ownerUsername: true });
+          this.selectedBookObject =
+            await selectedBookController.getBookInfo({ ownerUsername: true });
           return selectedBookResolve();
         }));
       }
@@ -173,12 +174,13 @@ export const createTrade = async (req, res) => {
   trade.description = req.body.description || '';
   trade.tradeStatus = 'P';
 
-  return trade.save((err, trade) => {
+  return trade.save(async (err, tradeObject) => {
     if (err) {
       console.log('An error occured while saving new trade:');
       console.log(err);
       return res.status(400).json({ success: false, error: 'Error saving trade.' });
     }
-    res.status(200).json({ success: true });
+    const tradeController = new TradeController({ trade: tradeObject });
+    res.status(200).json({ success: true, trade: await tradeController.getTradeInfo() });
   });
 };
