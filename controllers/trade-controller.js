@@ -180,6 +180,7 @@ export const createTrade = async (req, res) => {
       console.log(err);
       return res.status(400).json({ success: false, error: 'Error saving trade.' });
     }
-    res.status(200).json({ success: true });
+    const tradeController = new TradeController({ trade: tradeObject });
+    res.status(200).json({ success: true, trade: await tradeController.getTradeInfo() });
   });
 };
