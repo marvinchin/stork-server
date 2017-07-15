@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+
+<html>
+	<% trades.forEach(function(trade) { %>
+		<div>
+			<%= trade.id %>
+			
+		</div>
+
+	<% }); %>
+
+
+</html>

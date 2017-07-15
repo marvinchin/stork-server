@@ -1,9 +1,11 @@
+
 import { Router } from 'express';
 import { loginUser } from '../controllers/user-controller';
 import { createBook, BookController } from '../controllers/book-controller';
 import { getAllGenreTitles, addGenre } from '../controllers/genre-controller';
-import { createTrade } from '../controllers/trade-controller';
+import { createTrade, updateTrade } from '../controllers/trade-controller';
 import Book from '../models/book';
+import Trade from '../models/trade';
 import { mapAsync, filterAsync } from '../helpers/async-helper';
 
 const router = Router();
@@ -42,6 +44,17 @@ router.get('/tests/createTrade', (req, res, next) => {
     return res.status(500).render();
   });
 });
+router.get('/tests/acceptTrade', (req, res, next) => {
+  return Trade.find({}, async (err, trades) => {
+    if (err) return res.status(400).json({ success: false });
+    const filteredTrades = await filterAsync(trades, (trade, callback) => {
+      return callback(null, trade.listUser === req.session.auth.username);
+    });
+    console.log('Finished getting the trades');
+    console.log(filteredTrades);
+    return res.render('admin/acceptTrade', { trades: filteredTrades });   
+  });
+});
 
 router.get('/genres', async (req, res, next) => {
   let genreTitles;
@@ -70,6 +83,10 @@ router.post('/tests/createBook', (req, res, next) => {
 
 router.post('/tests/createTrade', (req, res, next) => {
   createTrade(req, res);
+});
+
+router.post('/tests/acceptTrade', (req, res, next) => {
+  updateTrade(req, res);
 });
 
 export default router;

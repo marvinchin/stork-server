@@ -8,7 +8,18 @@ export class TradeController {
   constructor(options) {
     if (options.trade) {
       this.trade = options.trade;
+    } else if (options.id) {
+      this.trade = TradeController.findTradeByID(options.id);
     }
+  }
+
+  static findTradeByID(id) {
+    return new Promise((resolve, reject) => {
+      Trade.findById(id, (err, trade) => {
+        if (err) return resolve(null);
+        return resolve(trade);
+      });
+    });
   }
 
   async checkThatTradeExists() {
@@ -109,6 +120,15 @@ export class TradeController {
       return Promise.all(promises).then(res => resolve());
     });
   }
+
+  addSelectedBook(id) {
+    return new Promise((resolve, reject) => {
+      this.trade.update({ selectedBook: id, tradeStatus: 'A' }, (err, res) => {
+        if (err) return reject(err);
+        return resolve();
+      });
+    });
+  }
 }
 
 /*
@@ -181,6 +201,84 @@ export const createTrade = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Error saving trade.' });
     }
     const tradeController = new TradeController({ trade: tradeObject });
-    res.status(200).json({ success: true, trade: await tradeController.getTradeInfo() });
+    return res.status(200).json({ success: true, trade: await tradeController.getTradeInfo() });
   });
+};
+
+/*
+  @param {Request} req - The request that will contain the neccesary parameters:
+    1) status {String} - The next status to update the state to. (A)
+    2) trade {ObjectID} - The object ID that refernces the trade in question.
+    3) selection {ObjectID} - The object ID that contains the selected book.
+  @param {response} res - The response object used to send response codes and data to client.
+*/
+const acceptTrade = async (req, res) => {
+  // Status and trade have already been checked to exist by updateTrade. Just check if there's
+  // selection.
+  if (!req.body.selection || !(typeof req.body.selection === 'string' || req.body.selection instanceof String)) {
+    return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
+  }
+
+  // Check that trade exists.
+  const tradeController = new TradeController({ id: req.body.trade });
+  if (!await tradeController.checkThatTradeExists()) {
+    return res.status(400).json({ success: false, error: 'Trade does not exist.'});
+  }
+
+  // Check that the trade actually belongs to the user.
+  if (tradeController.trade.listUser !== req.session.auth.username) {
+    return res.status(400).json({ success: false, error: 'You do not own the book.' });
+  }
+
+  // Check that the trade status is 'P'.
+  if (tradeController.trade.tradeStatus !== 'P') {
+    return res.status(400).json({ success: false, error: 'The trade is not pending your selection.' });
+  }
+
+  // Check that the book is inside the array of offers.
+  if (tradeController.trade.offerBooks.indexOf(req.body.selection) === -1) {
+    return res.status(400).json({ success: false, error: 'The trade is not pending your selection.' });
+  }
+
+  // Checks done. Time to update database with new data.
+  try {
+    await tradeController.addSelectedBook(req.body.selection);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: 'Error while updating trade.' });
+  }
+};
+
+/*
+  @param {Request} req - The request that will contain the neccesary parameters:
+    1) status {String} - The next status to update the state to. Enum of [A, C, OC, LC, BC].
+    2) trade {ObjectID} - The object ID that refernces the trade in question.
+  @param {response} res - The response object used to send response codes and data to client.
+
+  Serves as a router to route the various types of updates to more specialized handlers. Checks
+  for the validity of the request will be handled by the respective handlers.
+
+  @return {response} res - Sends response code 200 for success in creation of new book. Otherwise,
+  sends 400 with a json body that specifies { error }.
+*/
+export const updateTrade = async (req, res) => {
+  if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
+
+  // If no trade parameter or trade is not object ID string then straight away reject.
+  if (!req.body.trade || !(typeof req.body.trade === 'string' || req.body.trade instanceof String)) {
+    return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
+  }
+
+  // If no status parameter or status param is not a string then straight away reject.
+  if (!req.body.status || !(typeof req.body.status === 'string' || req.body.status instanceof String)) {
+    return res.status(400).json({ success: false, error: 'Missing or invalid parameters.' });
+  }
+
+  // Check for 'accept' route.
+  if (req.body.status === 'A') {
+    return acceptTrade(req, res);
+  }
+
+  // At the end, if no routes to go, it means invalid status enum. Reject.
+  return res.status(400).json({ success: false, error: 'Invalid status.' });
 };

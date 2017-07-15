@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<html>
+  <% trades.forEach(function(trade) { %>
+    <div>
+      <p><%= trade.id %></p>
+      <% trade.offerBooks.forEach(function(offer) { %>
+      <span>
+        <input type="checkbox" class="offer" id=<%= trade.id%> value=<%= offer %>>
+        <%= offer %>
+      </span>
+      <% }); %>
+    </div>
+  <% }); %>
+  <br>
+  <div>
+    <button onclick="sendData()">Submit</button>
+  </div>
+  <script>
+  function sendData() {
+    var xhr = new XMLHttpRequest();
+    var url = "/admin/tests/acceptTrade";
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+    alert(xhr.responseText);
+    var json = JSON.parse(xhr.responseText);
+    console.log(json);
+    }
+  };
+  var allOffers = document.getElementsByClassName("offer");
+  var filterSelected = Array.from(allOffers).filter(function(offer) {
+    return offer.checked;
+  });
+  if (filterSelected.length < 1) {
+    return alert('Select an offer!');
+  }
+  var theSelectedOffer = filterSelected[0];
+  
+  var data = JSON.stringify({"status": "A", "trade": theSelectedOffer.id, "selection": theSelectedOffer.value });
+  xhr.send(data);
+  }
+  </script>
+
+</html>
