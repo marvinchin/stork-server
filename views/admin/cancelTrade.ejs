@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html>
+  <div>
+    <% trades.forEach(function(trade) { %>
+    <span>
+      <input type="checkbox" class="cancels" value=<%= trade.id %>>
+      <%= trade.id %>
+    </span>
+    <% }); %>
+  </div>
+  <div>
+    <button onclick="sendData()">Submit</button>
+  </div>
+  <script>
+  function sendData() {
+    var xhr = new XMLHttpRequest();
+    var url = "/admin/tests/cancelTrade";
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+      alert(xhr.responseText);
+      var json = JSON.parse(xhr.responseText);
+      console.log(json);
+      }
+    };
+    var allCancels = document.getElementsByClassName("cancels");
+    var filterSelected = Array.from(allCancels).filter(function(cancel) {
+      return cancel.checked;
+    });
+    if (filterSelected.length < 1) {
+      return alert('Select a cancel!');
+    }
+    var theSelectedCancel = filterSelected[0];
+    
+    var data = JSON.stringify({"status": "C", "trade": theSelectedCancel.value });
+    xhr.send(data);
+  }
+  </script>
+</html>

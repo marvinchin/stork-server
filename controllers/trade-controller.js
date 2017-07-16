@@ -129,6 +129,15 @@ export class TradeController {
       });
     });
   }
+
+  cancelTrade() {
+    return new Promise((resolve, reject) => {
+      this.trade.update({ tradeStatus: 'C' }, (err, res) => {
+        if (err) return reject(err);
+        return resolve(err);
+      });
+    });
+  }
 }
 
 /*
@@ -140,7 +149,7 @@ export class TradeController {
 
   Creates a trade request for a book. Offer length must be >0, so all trades must be 1 for 1.
 
-  @return {response} res - Sends response code 200 for success in creation of new book. Otherwise,
+  @return {response} res - Sends response code 200 for success in creation of new trade. Otherwise,
   sends 400 with a json body that specifies { error }.
 */
 export const createTrade = async (req, res) => {
@@ -203,6 +212,40 @@ export const createTrade = async (req, res) => {
     const tradeController = new TradeController({ trade: tradeObject });
     return res.status(200).json({ success: true, trade: await tradeController.getTradeInfo() });
   });
+};
+
+/*
+  @param {request} req - The request object that contains body and headers. All necessary params
+    have already been checked by updateTrade (status, trade).
+  @param {response} res - The response object used to send response codes and data to client.
+
+  Cancels the trade. Will work as long as the user is involved in the trade regardless of the
+  current status of the trade.
+
+  @return {response} res - Sends response code 200 for success in cancelling trade. Otherwise,
+  sends 400 with a json body that specifies { error }.
+*/
+export const cancelTrade = async (req, res) => {
+  const tradeController = new TradeController({ id: req.body.trade });
+  
+  // Check if the trade exists.
+  if (!await tradeController.checkThatTradeExists()) {
+    return res.status(400).json({ success: false, error: 'Unable to find trade.' });
+  }
+
+  // Check if the user is involved in the trade.
+  if (tradeController.trade.listUser !== req.session.auth.username &&
+      tradeController.trade.offerUser !== req.session.auth.username) {
+    return res.status(400).json({ success: false, error: 'You are not involved in the trade.' });
+  }
+
+  // All checks passed. Time to cancel the trade.
+  try {
+    await tradeController.cancelTrade();
+  } catch (err) {
+    return res.status(400).json({ success: false, error: 'Error cancelling trade.' });
+  }
+  return res.status(200).json({ success: true });
 };
 
 /*
@@ -277,6 +320,10 @@ export const updateTrade = async (req, res) => {
   // Check for 'accept' route.
   if (req.body.status === 'A') {
     return acceptTrade(req, res);
+  }
+
+  if (req.body.status === 'C') {
+    return cancelTrade(req, res);
   }
 
   // At the end, if no routes to go, it means invalid status enum. Reject.

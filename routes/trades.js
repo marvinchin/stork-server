@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createTrade, getTradesInvolvingUser } from '../controllers/trade-controller';
+import { createTrade, getTradesInvolvingUser, updateTrade } from '../controllers/trade-controller';
 
 const router = Router();
 
@@ -13,6 +13,13 @@ router.post('/create', (req, res, next) => {
     return res.status(403).json({ success: false, error: 'Authentication required.' });
   }
   return createTrade(req, res);
+});
+
+router.post('/update', (req, res, next) => {
+  if (!req.authenticated) {
+    return res.status(403).json({ success: false, error: 'Authentication required.' });
+  }
+  return updateTrade(req, res);
 });
 
 /* 

@@ -55,6 +55,16 @@ router.get('/tests/acceptTrade', (req, res, next) => {
     return res.render('admin/acceptTrade', { trades: filteredTrades });   
   });
 });
+router.get('/tests/cancelTrade', (req, res, next) => {
+  return Trade.find({}, async (err, trades) => {
+    if (err) return res.status(400).json({ success: false, error: 'Error getting trades.' });
+    const filteredTrades = await filterAsync(trades, (trade, callback) => {
+      return callback(null, trade.offerUser === req.session.auth.username || trade.listUser === req.session.auth.username);
+    });
+    // No restriction on status of trade in order to cancel, so no filtering based on that.
+    return res.render('admin/cancelTrade', { trades: filteredTrades });
+  });
+});
 
 router.get('/genres', async (req, res, next) => {
   let genreTitles;
@@ -86,6 +96,10 @@ router.post('/tests/createTrade', (req, res, next) => {
 });
 
 router.post('/tests/acceptTrade', (req, res, next) => {
+  updateTrade(req, res);
+});
+
+router.post('/tests/cancelTrade', (req, res, next) => {
   updateTrade(req, res);
 });
 
