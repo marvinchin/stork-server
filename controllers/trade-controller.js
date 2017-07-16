@@ -222,7 +222,7 @@ const acceptTrade = async (req, res) => {
   // Check that trade exists.
   const tradeController = new TradeController({ id: req.body.trade });
   if (!await tradeController.checkThatTradeExists()) {
-    return res.status(400).json({ success: false, error: 'Trade does not exist.'});
+    return res.status(400).json({ success: false, error: 'Trade does not exist.' });
   }
 
   // Check that the trade actually belongs to the user.
@@ -281,4 +281,31 @@ export const updateTrade = async (req, res) => {
 
   // At the end, if no routes to go, it means invalid status enum. Reject.
   return res.status(400).json({ success: false, error: 'Invalid status.' });
+};
+
+/*
+  @param {Request} req - The request that will contain the neccesary parameters:
+  @param {response} res - The response object used to send response codes and data to client.
+
+  Returns the list of trades that the user is involved in. Authentication has already
+  been checked by the router.
+*/
+export const getTradesInvolvingUser = (req, res) => {
+  return Trade.find({}, async (err, trades) => {
+    if (err) return res.status(400).json({ success: false, error: 'Error fetching trades.' });
+
+    // "Involved in" is defined as being an offerer or a lister of a trade.
+    const filteredTrades = await filterAsync(trades, (trade, callback) => {
+      return callback(null, trade.listUser === req.session.auth.username || trade.offerUser === req.session.auth.username);
+    });
+    
+    const mappedTrades = await mapAsync(filteredTrades, (trade, callback) => {
+      const tradeController = new TradeController({ trade });
+      return tradeController.getTradeInfo().then((info) => {
+        return callback(null, info);
+      });
+    });
+
+    return res.status(200).json({ success: true, trades: mappedTrades });
+  });
 };
