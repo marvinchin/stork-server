@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createTrade, getTradesInvolvingUser, updateTrade } from '../controllers/trade-controller';
+import { TradeController, createTrade, getTradesInvolvingUser, updateTrade } from '../controllers/trade-controller';
 
 const router = Router();
 
@@ -32,6 +32,14 @@ router.get('/list' , (req, res, next) => {
     return res.status(403).json({ success: false, error: 'Authentication required.'});
   }
   return getTradesInvolvingUser(req, res);
+});
+
+router.get('/getByID/:id', async (req, res, next) => {
+  const tradeController = new TradeController({ id: req.params.id });
+  if (!await tradeController.checkThatTradeExists()) {
+    return res.status(403).json({ success: false, error: 'Trade not found.'});
+  }
+  return res.status(200).json({ success: true, trade: await tradeController.getTradeInfo() });
 });
 
 export default router;
