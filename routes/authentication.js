@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { UserController, createUser, loginUser } from '../controllers/user-controller';
+import { UserController, createUser, loginUser, logoutUser } from '../controllers/user-controller';
 
 const router = Router();
 
@@ -9,6 +9,13 @@ router.post('/create', (req, res, next) => {
 
 router.post('/login', (req, res, next) => {
   loginUser(req, res);
+});
+
+router.post('/logout', (req, res, next) => {
+  if (!req.authenticated) {
+    return res.status(200).json({ success: false, error: 'You are not authenticated.' });
+  }
+  logoutUser(req, res);
 });
 
 /*

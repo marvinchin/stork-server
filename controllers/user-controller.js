@@ -108,6 +108,23 @@ export class UserController {
     });
   }
 
+  removeAuthorizationToken(sessionID) {
+    return new Promise((resolve, reject) => {
+      const filteredTokens = this.user.authorizedTokens.filter((token) => {
+        return token.expiry.getTime() > Date.now() && token.id !== sessionID;
+      });
+      
+      return this.user.update({ authorizedTokens: filteredTokens }, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err)
+        }
+        return resolve();
+      });
+    });
+
+  }
+
   /*
     @param {String} sessionID - The sessionID thats used as the authorization token for validation.
     @return {Boolean} - Whether or not the authorization token is valid.
@@ -260,4 +277,24 @@ export const loginUser = async (req, res) => {
   req.session.auth = { username: req.body.username };
 
   return res.status(200).json({ success: true, user: await matchingUserController.getUserInfo() });
+};
+
+/*
+  @param {request} req - The request object that contains body and headers. Request must contain:
+  @param {response} res - The response object used to send response codes and data to client.
+  
+  The router has already ensured that the user is authenticated.
+
+  Log outs the user by deleting the session ID.
+*/
+export const logoutUser = (req, res) => {
+  const userController = new UserController({ username: req.session.auth.username });
+  try {
+    userController.checkThatUserExists().then(() => {
+      userController.removeAuthorizationToken(req.session.id)});
+    req.session.auth = null;
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, error: 'Error logging out.'});
+  }
 };
