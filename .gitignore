@@ -47,3 +47,7 @@ jspm_packages
 
 # Default profile picture
 /public/profile-pictures/*
+
+# Emacs files
+*~
+\#*\#
