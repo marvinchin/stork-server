@@ -1,9 +1,6 @@
 import { Router } from 'express';
-<<<<<<< HEAD
+
 import { UserController, createUser, loginUser, logoutUser } from '../controllers/user-controller';
-=======
-import { UserController, createUser, loginUser } from '../controllers/user-controller';
->>>>>>> 6a8f79657c4aed32d1bd934a67f7a67c15bef46e
 
 const router = Router();
 
@@ -15,7 +12,7 @@ router.post('/login', (req, res, next) => {
   loginUser(req, res);
 });
 
-<<<<<<< HEAD
+
 router.post('/logout', (req, res, next) => {
   if (!req.authenticated) {
     return res.status(200).json({ success: false, error: 'You are not authenticated.' });
@@ -23,8 +20,6 @@ router.post('/logout', (req, res, next) => {
   logoutUser(req, res);
 });
 
-=======
->>>>>>> 6a8f79657c4aed32d1bd934a67f7a67c15bef46e
 /*
   Helps client check the status of authentication before performing
   authentication-required stuff.

@@ -170,3 +170,70 @@ export const getRecentBooks = (from, to) =>
       return resolve(mappedBooks);
     });
   });
+
+/*
+  @param {Request} req - The request object that contains the following:
+    1) query {String} - the search text.
+    2) genres Array{String} - array of genres that are allowed. (optional)
+    3) searchBy {String} - Enum of 'title' or 'author'.
+1  @param {Response} res - The response object.
+*/
+export const searchBook = async (req, res) => {
+  if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
+
+  if (!req.body.query) return res.status(400).json({ success: false, error: 'Missing query' });
+
+  let result = null;
+
+  if (!req.body.searchBy) {
+    result = new Promise((resolve, reject) => {
+      Book.find({ $text: { $search: req.body.query } }).populate('genre','title').exec(async (err, books) => {
+        if (err) return reject();
+        return resolve(books);
+      });
+    });
+  } else if (req.body.searchBy === 'title') {
+    result = new Promise((resolve, reject) => {
+      Book.find({ title: new RegExp(req.body.query) }).populate('genre','title').exec((err, books) => {
+        if (err) return reject();
+        return resolve(books);
+      });
+    });
+  } else {
+    result = new Promise((resolve, reject) => {
+      Book.find({ author: new RegExp(req.body.query) }).populate('genre','title').exec((err, books) => {
+        if (err) return reject();
+        return resolve(books);
+      });
+    });
+  }
+  result.catch(() => {
+    return res.status(200).json({ success: false, error: 'Error findind books.'});
+  });
+  
+  let filteredBooks = await result;
+  // Filter the books by genre.
+  if (req.body.genres) {
+    filteredBooks = await filterAsync(filteredBooks, (book, callback) => {
+      return callback(null, req.body.genres.indexOf(book.genre.title) > -1);
+    });
+  }
+  // Now get info for all books
+  const mappedBookInfo = await mapAsync(filteredBooks, (book, callback) => {
+    const bookController = new BookController({ book });
+    bookController.getBookInfo({ ownerUsername: true }).then((info) => {
+      return callback(null, info);
+    });
+  });
+  return res.status(200).json({ success: true, books: mappedBookInfo });
+};
+
+
+
+
+
+
+
+
+
+

@@ -8,5 +8,6 @@ const BookSchema = Schema({
   dateListed: { type: Date, required: true },
   description: { type: String, default: '' },
 });
+BookSchema.index({ title: 'text', author: 'text'});
 
 export default mongoose.model('Book', BookSchema);

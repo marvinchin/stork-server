@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getRecentBooks, createBook, BookController } from '../controllers/book-controller';
+import { getRecentBooks, createBook, BookController, searchBook } from '../controllers/book-controller';
 
 
 const router = Router();
@@ -26,7 +26,9 @@ router.get('/list/:n', async (req, res, next) => {
   return res.status(200).json({ success: true, books });
 });
 
-
+router.post('/search', (req, res, next) => {
+  return searchBook(req, res);
+});
 /*
   Creates a book under the user.
 

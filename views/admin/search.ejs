@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html>
+
+  <div>Search Book:</div>
+  <div>
+    <label>Text<input type="text" id="searchText"></label>
+  </div>
+  <div>
+    <label>Genres<input type="text" id="genres"></label>
+  </div>
+  <div>
+    author<input type="checkbox" id="author">
+  </div>
+  <div>
+    title<input type="checkbox" id="title">
+  </div>
+  <div>
+    <button type="button" onclick="sendData()">Submit</button>
+  </div>
+  <script>
+    function sendData() {
+      var xhr = new XMLHttpRequest();
+      var url = "/admin/searchBook";
+      xhr.open("POST", url, true);
+      xhr.setRequestHeader("Content-type", "application/json");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          alert(xhr.responseText);
+          var json = JSON.parse(xhr.responseText);
+          console.log(json);
+        }
+      };
+      var searchText = document.getElementById('searchText').value;
+      var genres = document.getElementById('genres').value;
+      var splittedGenres = genres.split(" ");
+      var data = null;
+      var author = document.getElementById('author').checked;
+      var title = document.getElementById('title').checked;
+      if (genres === "") {
+        data = { "query":searchText };
+      } else {
+        data = { "query":searchText,"genres": splittedGenres.length > 0 ? splittedGenres:null };
+      }
+      if (author) {
+        data.searchBy = "author";
+      }
+      if (title) {
+        data.searchBy = "title";
+      }
+      xhr.send(JSON.stringify(data));
+    }
+
+  </script>
+</html>

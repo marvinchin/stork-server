@@ -2,8 +2,9 @@
 
 <html>
   <a href="/admin/genres">Manage Genres</a>
+  <a href="/admin/search">Search</a>
   <a href="/admin/tests">Tests</a>
-  <input type="button" onclick="post('/authentication/logout',{})" />
+  <button type="button" onclick="post('/authentication/logout',{})">Logout</button>
 
   <script>
     function post(path, params, method) {

@@ -35,7 +35,6 @@ router.get('/list' , (req, res, next) => {
   return getTradesInvolvingUser(req, res);
 });
 
-<<<<<<< HEAD
 router.get('/getByID/:id', async (req, res, next) => {
   const tradeController = new TradeController({ id: req.params.id });
   if (!await tradeController.checkThatTradeExists()) {
@@ -44,6 +43,4 @@ router.get('/getByID/:id', async (req, res, next) => {
   return res.status(200).json({ success: true, trade: await tradeController.getTradeInfo() });
 });
 
-=======
->>>>>>> 6a8f79657c4aed32d1bd934a67f7a67c15bef46e
 export default router;

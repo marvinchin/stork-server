@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { loginUser } from '../controllers/user-controller';
-import { createBook, BookController } from '../controllers/book-controller';
+import { createBook, BookController, searchBook } from '../controllers/book-controller';
 import { getAllGenreTitles, addGenre } from '../controllers/genre-controller';
 import { createTrade, updateTrade } from '../controllers/trade-controller';
 import Book from '../models/book';
@@ -77,6 +77,14 @@ router.get('/genres', async (req, res, next) => {
     res.status(500).render();
   }
 });
+
+router.get('/search', (req, res, next) => {
+  res.render('admin/search');
+});
+
+router.post('/searchBook', (req, res, next) => {
+  searchBook(req, res);
+})
 
 router.post('/login', (req, res, next) => {
   req.body.expiry = 3600;
