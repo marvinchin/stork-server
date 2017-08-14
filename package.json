@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "babel-node ./bin/www --presets es2015",
-    "dev": "nodemon ./bin/www --exec babel-node --presets es2015",
+    "start": "babel-node ./bin/www --presets es2015,es2017",
+    "dev": "nodemon ./bin/www --exec babel-node --presets es2015,es2017",
     "debug": "env DEBUG='stork-server:*' yarn run dev"
   },
   "dependencies": {
+    "babel-preset-es2017": "^6.24.1",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "~1.15.2",
     "connect-mongo": "^1.3.2",
