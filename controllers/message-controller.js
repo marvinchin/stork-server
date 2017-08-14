@@ -1,18 +1,10 @@
 import Message from "../models/message";
 import { TradeController } from "./trade-controller";
 
-function findMessageById(id) {
-  return new Promise((resolve, reject) => {
-    Message.findById(id, (err, message) => {
-      if (err) reject(err);
-      resolve(message);
-    });
-  });
-}
-
 function findMessagesByTrade(trade) {
   return new Promise((resolve, reject) => {
-    Message.find({ trade }).exec((err, messages) => {
+    // We want the messages to be sorted in order of time created
+    Message.find({ trade }).sort({ _id: 1 }).exec((err, messages) => {
       if (err) reject(err);
       resolve(messages);
     });
@@ -36,17 +28,29 @@ export async function createMessage(req, res) {
   // Check that the trade exists
   // TODO: Change this to non-class implementation
   const tradeController = new TradeController({ id: trade });
-  const tradeExists = await tradeController.checkThatTradeExists();
-  if (!tradeExists) {
+  const tradeInfo = await tradeController.getTradeInfo();
+  if (!tradeInfo) {
     return res
       .status(400)
       .json({ success: false, error: "Trade does not exist" });
   }
+  // Check that the sender is either the list or offer user
+  const sender = req.session.auth.username;
+  if (
+    sender !== tradeInfo.listUser.username &&
+    sender !== tradeInfo.offerUser.username
+  ) {
+    return res.status(400).json({
+      success: false,
+      error: "User is not a participant in this trade"
+    });
+  }
+
   // Passed all checks, create the message
   const message = new Message();
   message.trade = trade;
   message.content = content;
-  message.sender = req.session.auth.username;
+  message.sender = sender;
 
   return message.save(async (err, messageObject) => {
     if (err) {
@@ -54,7 +58,7 @@ export async function createMessage(req, res) {
         .status(400)
         .json({ success: false, error: "Error saving message." });
     }
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, message });
   });
 }
 
