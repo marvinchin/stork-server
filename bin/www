@@ -7,6 +7,7 @@ import Debug from 'debug';
 import http from 'http';
 
 import app from '../app';
+import { initSocket } from '../helpers/socket';
 
 
 const debug = Debug('stork-server:server');
@@ -92,3 +93,9 @@ function onListening() {
     : `port ${addr.port}`;
   debug(`Listening on ${bind}`);
 }
+
+/**
+ * Bind socket to server
+ */
+
+initSocket(server);
