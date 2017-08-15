@@ -2,43 +2,36 @@ import socketio from "socket.io";
 
 let io = null;
 
-const userSocketMapping = {};
 const socketUserMapping = {};
 
 function handleSetUser(user, socket) {
-  console.log(`${user} on ${socket}`);
-  // If this socket is already mapped to this user, no need to add mappings
+  // If this socket is already mapped to this user, no changes to rooms
+  // Otherwise, if socket is currently mapped to another user, we unset that user
   if (socketUserMapping[socket.id] === user) {
-    console.log("Already bound, no mappings added");
+    console.log("Already mapped");
     return;
+  } else if (!socketUserMapping[socket.id]) {
+    handleUnsetUser(socket);
   }
-  // If there is no sockets for this user, we add this key in the mapping
-  if (!userSocketMapping[user]) {
-    userSocketMapping[user] = [socket];
-  } else {
-    userSocketMapping[user] = [...userSocketMapping[user], socket.id];
-  }
+
+  // We use the username as the room identifier
+  socket.join(user);
   // Each socket should only have on user, so we just update the socketUserMapping
   socketUserMapping[socket.id] = user;
   console.log("Mappings added for user");
+  io.in(user).clients((err, clients) => {
+    console.log(clients);
+  });
 }
 
 function handleUnsetUser(socket) {
   console.log(`user unset from ${socket}`);
   const user = socketUserMapping[socket.id];
-  // Remove the socket-user mapping for this socket
-  socketUserMapping[socket.id] = null;
-  if (!user) {
-    return;
-  }
-  // Remove this socket from the user-socket mappings for this user
-  const userSockets = userSocketMapping[user];
-  const socketIndex = userSockets.indexOf(socket);
-  if (socketIndex != -1) {
-    userSockets.splice(socketIndex);
-  }
-
-  console.log(userSocketMapping);
+  // Remove this connection from the room
+  socket.leave(user);
+  io.in(user).clients((err, clients) => {
+    console.log(clients);
+  });
 }
 
 function handleDisconnect(socket) {
@@ -56,5 +49,7 @@ export function initSocket(server) {
     socket.on("unset-user", () => handleUnsetUser(socket));
   });
 }
+
+export function sendEventToUser(user, event, data) {}
 
 export default io;
