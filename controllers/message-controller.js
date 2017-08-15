@@ -1,5 +1,8 @@
 import Message from "../models/message";
 import { TradeController } from "./trade-controller";
+import { sendEventToUser } from "../helpers/socket";
+
+const NEW_MESSAGE_EVENT = "new-message";
 
 function findMessagesByTrade(trade) {
   return new Promise((resolve, reject) => {
@@ -9,6 +12,17 @@ function findMessagesByTrade(trade) {
       resolve(messages);
     });
   });
+}
+
+// Send events to connected users involved in this trade that a new
+// message has been sent
+async function sendNewMessageEvent(trade) {
+  const tradeController = new TradeController({ id: trade });
+  const tradeInfo = await tradeController.getTradeInfo();
+  const { listUser, offerUser, id } = tradeInfo;
+
+  sendEventToUser(listUser.username, NEW_MESSAGE_EVENT, id);
+  sendEventToUser(offerUser.username, NEW_MESSAGE_EVENT, id);
 }
 
 export async function createMessage(req, res) {
@@ -58,6 +72,7 @@ export async function createMessage(req, res) {
         .status(400)
         .json({ success: false, error: "Error saving message." });
     }
+    sendNewMessageEvent(trade);
     return res.status(200).json({ success: true, message });
   });
 }
