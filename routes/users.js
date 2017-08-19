@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { UserController } from '../controllers/user-controller';
+import { UserController, editUserProfile } from '../controllers/user-controller';
 
 const router = Router();
 
@@ -29,7 +29,7 @@ router.post('/edit', async (req, res, next) => {
     return res.status(200).json({ success: false, error: 'You are not authenticated.' });
   }
 
-  // TODO: Finish this.
+  return editUserProfile(req, res);
 });
 
 export default router;
