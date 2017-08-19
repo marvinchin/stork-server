@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<html>
+  <div>
+    description:
+    <input type="text" id="description" />
+  </div>
+  <div>
+    gender:
+    <input type="text" id="gender" />
+  </div>
+  <div>
+    profile picture:
+    <input type="text" id="profile-picture" />
+  </div>
+  <div>
+    old password:
+    <input type="text" id="old-password" />
+    new password:
+    <input type="text" id="new-password" />
+  </div>
+  <div>
+    <button onclick="sendData()">Submit</button>
+  </div>
+  <script>
+    function sendData() {
+      var xhr = new XMLHttpRequest();
+      var url = "/admin/tests/editProfile";
+      xhr.open("POST", url, true);
+      xhr.setRequestHeader("Content-type", "application/json");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          alert(xhr.responseText);
+          var json = JSON.parse(xhr.responseText);
+          console.log(json);
+        }
+      };
+      var description = document.getElementById("description");
+      var gender = document.getElementById("gender");
+      var profilePicture = document.getElementById("profile-picture");
+      var oldPassword = document.getElementById("old-password");
+      var newPassword = document.getElementById("new-password");
+
+
+      var options = {};
+      if (description.value !== "") {
+        options.description = description.value;
+      }
+      if (gender.value !== "") {
+        options.gender = gender.value;
+      }
+      if (profilePicture.value !== "") {
+        options.profilePicture = profilePicture.value;
+      }
+      if (oldPassword.value !== "" || newPassword.value !== "") {
+        options.password = {}
+      }
+      if (oldPassword.value !== "") {
+        options.password.old = oldPassword.value;
+      }
+      if (newPassword.value !== "") {
+        options.password.new = newPassword.value;
+      }
+
+      var data = JSON.stringify({ options });
+      xhr.send(data);
+    }
+  </script>
+</html>
