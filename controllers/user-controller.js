@@ -347,8 +347,7 @@ export const logoutUser = (req, res) => {
 };
 
 /*
-  @param {Request} req - The request object.
-  @param {Object} options - An object that optionally contains the following params:
+  @param {Request} req - The request object. The request contains the following params:
     1) description - {String}, max 100 chars
     2) gender - {String}, enum of 'Male' or 'Female'
     3) profilePicture - {String}, base64 encoded string in JPEG format.
@@ -360,7 +359,6 @@ export const logoutUser = (req, res) => {
 */
 export const editUserProfile = async (req, res) => {
   if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
-  if (!req.body.options) return res.status(400).json({ success: false, error: 'Missing parameters.' });
 
   // Get the user object into a controller first, then start editing data based on request.
   const userController = new UserController({ username: req.session.auth.username });
@@ -372,18 +370,18 @@ export const editUserProfile = async (req, res) => {
 
   // Params such as description and gender are automatically rejected by the db, so no need to check
   // that. Instead, check profile picture encoding and old password correctness.
-  if (req.body.options.password) {
-    if (!req.body.options.password.old || !req.body.options.password.new) {
+  if (req.body.password) {
+    if (!req.body.password.old || !req.body.password.new) {
       return res.status(400).json({ success: false, error: 'Missing parameters in password.' });
     }
     // Verify the validity of old password.
-    const hashesMatch = await userController.hashesMatch(req.body.options.password.old);
+    const hashesMatch = await userController.hashesMatch(req.body.password.old);
     if (!hashesMatch) return res.status(400).json({ success: false, error: 'Invalid credentials.' });
   }
 
   // From this line onwards, all necessary information has been validated. Time to edit the database.
   try {
-    const success = await userController.editInformation(req.body.options);
+    const success = await userController.editInformation(req.body);
     return res.status(200).json({ success: true });
   } catch (err) {
     res.status(400).json({ success: false, error: 'Invalid parameters.' });

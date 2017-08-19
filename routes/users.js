@@ -26,7 +26,7 @@ router.get('/:username', async (req, res, next) => {
 */
 router.post('/edit', async (req, res, next) => {
   if (!req.authenticated) {
-    return res.status(200).json({ success: false, error: 'You are not authenticated.' });
+    return res.status(200).json({ success: false, error: 'Authentication required.' });
   }
 
   return editUserProfile(req, res);
