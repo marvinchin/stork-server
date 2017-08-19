@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser } from "../controllers/user-controller";
+import { loginUser, editUserProfile } from "../controllers/user-controller";
 import {
   createBook,
   BookController,
@@ -101,6 +101,10 @@ router.get("/search", (req, res, next) => {
   res.render("admin/search");
 });
 
+router.get("/tests/editProfile", (req, res, next) => {
+  res.render("admin/editprofile");
+});
+
 router.post("/searchBook", (req, res, next) => {
   searchBook(req, res);
 });
@@ -128,6 +132,10 @@ router.post("/tests/acceptTrade", (req, res, next) => {
 
 router.post("/tests/cancelTrade", (req, res, next) => {
   updateTrade(req, res);
+});
+
+router.post("/tests/editProfile", (req, res, next) => {
+  editUserProfile(req, res);
 });
 
 export default router;

@@ -22,6 +22,6 @@ const UserSchema = Schema({
   authorizedTokens: [{ id: String, expiry: Date }],
   books: [{ type: Schema.ObjectId, ref: 'Book' }],
 });
-UserSchema.index({ username: 'text'});
+UserSchema.index({ username: 'text' });
 
 export default mongoose.model('User', UserSchema);

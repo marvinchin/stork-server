@@ -2,6 +2,7 @@ import User from '../models/user';
 import { BookController } from '../controllers/book-controller';
 import { generateHash, compareHash } from '../helpers/crypto';
 import { mapAsync } from '../helpers/async-helper';
+import { saveProfilePicture } from '../helpers/filesystem';
 
 export class UserController {
   constructor(options) {
@@ -45,7 +46,7 @@ export class UserController {
       email: this.user.email,
       gender: this.user.gender,
       description: this.user.description,
-      profilePicture: `/profile-pictures/${this.user.profilePicture ? this.user.username : '_default'}.jpg`,
+      profilePicture: `/profile-pictures/${this.user.profilePictureIsSet ? this.user.username : '_default'}.jpg`,
       books: await mappedBooks,
     };
   }
@@ -156,6 +157,52 @@ export class UserController {
         return resolve();
       });
     });
+  }
+
+  /*
+    @param {Object} options - An object containing the fields to be edited. This must already
+    been validated by the calling function.
+
+    Throws errors when fails, none if succeed.
+  */
+  editInformation(options) {
+    return new Promise(async (resolve, reject) => {
+      if (options.description) {
+        this.user.description = options.description;
+      }
+
+      if (options.gender) {
+        this.user.gender = options.gender;
+      }
+      
+      if (options.password && options.password.new) {
+        let hashedPassword;
+        try {
+          hashedPassword = await generateHash(options.password.new);
+        } catch (err) {
+          console.log('Error hashing password.');
+          return reject();
+        }
+        this.user.hashedPassword = hashedPassword;
+      }
+
+      if (options.profilePicture) {
+        this.user.profilePictureIsSet = true;
+        try {
+          await saveProfilePicture(this.user.username, options.profilePicture);
+        } catch (err) {
+          console.log('An error has occured saving profile picture.');
+          return reject();
+        }
+      }
+
+      // Save the data.
+      return this.user.save((err, user) => {
+        if (err) return reject();
+        return resolve();
+      });
+    });
+
   }
 }
 
@@ -296,5 +343,49 @@ export const logoutUser = (req, res) => {
     return res.status(200).json({ success: true });
   } catch (err) {
     res.status(400).json({ success: false, error: 'Error logging out.'});
+  }
+};
+
+/*
+  @param {Request} req - The request object.
+  @param {Object} options - An object that optionally contains the following params:
+    1) description - {String}, max 100 chars
+    2) gender - {String}, enum of 'Male' or 'Female'
+    3) profilePicture - {String}, base64 encoded string in JPEG format.
+    4) password - {Object}, an object containing the following two compulsory params:
+      a) old - {String}, old password.
+      b) new - {String}, the new password to change to.
+  @param {Response} res - The response object.
+  Edits the user's profile based on the given information.
+*/
+export const editUserProfile = async (req, res) => {
+  if (!req.body) return res.status(400).json({ success: false, error: 'Use JSON!' });
+  if (!req.body.options) return res.status(400).json({ success: false, error: 'Missing parameters.' });
+
+  // Get the user object into a controller first, then start editing data based on request.
+  const userController = new UserController({ username: req.session.auth.username });
+
+  // Chances are that there should be no problem fetching the user object, but just to be sure...
+  if (!await userController.checkThatUserExists()) {
+    res.status(400).json({ success: false, error: 'An error has occured.' });
+  }
+
+  // Params such as description and gender are automatically rejected by the db, so no need to check
+  // that. Instead, check profile picture encoding and old password correctness.
+  if (req.body.options.password) {
+    if (!req.body.options.password.old || !req.body.options.password.new) {
+      return res.status(400).json({ success: false, error: 'Missing parameters in password.' });
+    }
+    // Verify the validity of old password.
+    const hashesMatch = await userController.hashesMatch(req.body.options.password.old);
+    if (!hashesMatch) return res.status(400).json({ success: false, error: 'Invalid credentials.' });
+  }
+
+  // From this line onwards, all necessary information has been validated. Time to edit the database.
+  try {
+    const success = await userController.editInformation(req.body.options);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, error: 'Invalid parameters.' });
   }
 };

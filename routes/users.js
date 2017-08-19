@@ -19,4 +19,17 @@ router.get('/:username', async (req, res, next) => {
   return res.status(200).json({ success: true, user: result });
 });
 
+/*
+  The endpoint to edit the user's profile information.
+
+  Authentication needed.
+*/
+router.post('/edit', async (req, res, next) => {
+  if (!req.authenticated) {
+    return res.status(200).json({ success: false, error: 'You are not authenticated.' });
+  }
+
+  // TODO: Finish this.
+});
+
 export default router;
