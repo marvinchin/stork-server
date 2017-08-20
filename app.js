@@ -40,7 +40,7 @@ mongoose.connect(config.DB_CONNECTION_STRING, {}, err => {
 // uncomment after placing your favicon in /public
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger("dev"));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors);
 app.use(validator());
